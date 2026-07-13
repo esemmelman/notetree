@@ -2,6 +2,8 @@ const STORAGE_KEY='notetree_pages_v1';
 let pages=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
 let currentPageId=null,newPageParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
 const collapsedPages=new Set();
+const MOBILE_BREAKPOINT=699;
+let longPressTimer=null,longPressStart=null,suppressTreeClickUntil=0;
 
 const $=id=>document.getElementById(id);
 const homeView=$('homeView'),pageView=$('pageView'),searchView=$('searchView');
@@ -20,6 +22,17 @@ function compareChildOrder(a,b){
 function childrenOf(id){return pages.filter(page=>page.parentId===id).sort(id===null?compareTitles:compareChildOrder);}
 function showOnly(view){[homeView,pageView,searchView].forEach(item=>item.hidden=item!==view);}
 function renderActiveView(){if(!pageView.hidden)renderPage();else if(!searchView.hidden)renderSearch();else renderHome();}
+function isMobile(){return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;}
+function openSidebar(){
+ if(!isMobile())return;
+ $('sidebar').classList.add('open');$('sidebarScrim').classList.add('open');
+ $('homeBtn').setAttribute('aria-expanded','true');$('homeBtn').setAttribute('aria-label','Close page tree');document.body.classList.add('tree-open');
+}
+function closeSidebar(){
+ $('sidebar').classList.remove('open');$('sidebarScrim').classList.remove('open');
+ $('homeBtn').setAttribute('aria-expanded','false');$('homeBtn').setAttribute('aria-label','Open page tree');document.body.classList.remove('tree-open');
+}
+function toggleSidebar(){$('sidebar').classList.contains('open')?closeSidebar():openSidebar();}
 
 function makePageRow(page,detail=''){
  const row=document.createElement('div');row.className='page-row';
@@ -40,10 +53,12 @@ function treeBranch(page){
  if(children.length){
   toggle.textContent=collapsedPages.has(page.id)?'›':'⌄';
   toggle.setAttribute('aria-label',`${collapsedPages.has(page.id)?'Expand':'Collapse'} ${page.title||'Untitled'}`);
-  toggle.onclick=event=>{event.stopPropagation();collapsedPages.has(page.id)?collapsedPages.delete(page.id):collapsedPages.add(page.id);renderTree();};
+  toggle.onclick=event=>{event.stopPropagation();if(Date.now()<suppressTreeClickUntil)return;collapsedPages.has(page.id)?collapsedPages.delete(page.id):collapsedPages.add(page.id);renderTree();};
  }else{toggle.classList.add('placeholder');toggle.textContent='·';toggle.tabIndex=-1;}
- const open=document.createElement('button');open.type='button';open.className='tree-page';open.textContent=page.title||'Untitled';open.title=page.title||'Untitled';open.onclick=()=>openPage(page.id);
+ const open=document.createElement('button');open.type='button';open.className='tree-page';open.textContent=page.title||'Untitled';open.title=page.title||'Untitled';
+ open.onclick=()=>{if(Date.now()<suppressTreeClickUntil)return;openPage(page.id);};
  row.oncontextmenu=event=>openPageContextMenu(event,page.id);
+ bindLongPress(row,page.id);
  if(page.parentId!==null){
   row.draggable=true;
   row.ondragstart=event=>startPageDrag(event,page.id);
@@ -105,7 +120,7 @@ function renderPage(){
 }
 
 function openPage(id,push=true){
- if(!pageById(id))return;currentPageId=id;renderPage();
+ if(!pageById(id))return;currentPageId=id;renderPage();closeSidebar();
  if(push)history.pushState({pageId:id},'',`#page=${encodeURIComponent(id)}`);
  window.scrollTo(0,0);
 }
@@ -169,6 +184,28 @@ function openPageContextMenu(event,pageId){
  menu.querySelector('button').focus();
 }
 
+function cancelLongPress(){
+ clearTimeout(longPressTimer);longPressTimer=null;longPressStart=null;
+}
+
+function bindLongPress(row,pageId){
+ row.addEventListener('pointerdown',event=>{
+  if(event.pointerType==='mouse'||event.button!==0)return;
+  cancelLongPress();longPressStart={x:event.clientX,y:event.clientY,pointerId:event.pointerId};
+  longPressTimer=setTimeout(()=>{
+   if(!longPressStart)return;
+   suppressTreeClickUntil=Date.now()+700;navigator.vibrate?.(25);
+   openPageContextMenu({preventDefault(){},stopPropagation(){},clientX:longPressStart.x,clientY:longPressStart.y},pageId);
+   cancelLongPress();
+  },550);
+ });
+ row.addEventListener('pointermove',event=>{
+  if(!longPressStart||event.pointerId!==longPressStart.pointerId)return;
+  if(Math.hypot(event.clientX-longPressStart.x,event.clientY-longPressStart.y)>10)cancelLongPress();
+ });
+ ['pointerup','pointercancel','lostpointercapture'].forEach(type=>row.addEventListener(type,cancelLongPress));
+}
+
 function openRenamePageDialog(pageId){
  const page=pageById(pageId);if(!page)return;
  renamePageId=pageId;$('renamePageTitle').value=page.title;$('renamePageDialog').showModal();$('renamePageTitle').select();
@@ -204,8 +241,9 @@ $('pageContextMenu').onclick=event=>{
  if(action==='delete')deletePage(pageId);
 };
 document.addEventListener('pointerdown',event=>{if(!event.target.closest('#pageContextMenu'))closePageContextMenu();});
-document.addEventListener('keydown',event=>{if(event.key==='Escape')closePageContextMenu();});
-window.addEventListener('blur',closePageContextMenu);window.addEventListener('resize',closePageContextMenu);
+document.addEventListener('keydown',event=>{if(event.key==='Escape'){closePageContextMenu();closeSidebar();}});
+window.addEventListener('blur',()=>{closePageContextMenu();cancelLongPress();});
+window.addEventListener('resize',()=>{closePageContextMenu();if(!isMobile())closeSidebar();});
 $('pageTree').addEventListener('scroll',closePageContextMenu,true);
 $('pageTree').addEventListener('dragover',clearDropIndicators);
 $('newRootBtn').onclick=()=>openNewPageDialog(null);
@@ -213,7 +251,8 @@ $('mobileNewBtn').onclick=()=>openNewPageDialog(null);
 $('welcomeNewBtn').onclick=()=>openNewPageDialog(null);
 $('addChildBtn').onclick=()=>openNewPageDialog(currentPageId);
 $('detailsAddChildBtn').onclick=()=>openNewPageDialog(currentPageId);
-$('homeBtn').onclick=()=>goHome();
+$('homeBtn').onclick=toggleSidebar;
+$('sidebarScrim').onclick=closeSidebar;
 pageTitle.addEventListener('input',schedulePageSave);pageContent.addEventListener('input',()=>{schedulePageSave();resizeEditor();});
 
 $('addLinkBtn').onclick=()=>{

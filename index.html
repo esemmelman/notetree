@@ -1,5 +1,4 @@
 <!doctype html>
-//
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -9,7 +8,7 @@
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar" aria-label="Page navigation">
+    <aside id="sidebar" class="sidebar" aria-label="Page navigation">
       <div class="sidebar-brand">
         <span class="brand-mark" aria-hidden="true">N</span>
         <strong>NoteTree <small>v0.1</small></strong>
@@ -26,8 +25,10 @@
       <div class="sidebar-footer">Stored on this device</div>
     </aside>
 
+    <button id="sidebarScrim" class="sidebar-scrim" type="button" aria-label="Close page tree" tabindex="-1"></button>
+
     <header class="appbar">
-      <button id="homeBtn" class="mobile-home" type="button" aria-label="All pages">☰</button>
+      <button id="homeBtn" class="mobile-home" type="button" aria-label="Open page tree" aria-controls="sidebar" aria-expanded="false">&#9776;</button>
       <strong>NoteTree <small>v0.1</small></strong>
       <button id="mobileNewBtn" type="button">New</button>
       <button id="mobileSearchBtn" type="button">Find</button>
@@ -102,7 +103,7 @@
 
   <div id="pageContextMenu" class="context-menu" role="menu" hidden>
     <button type="button" role="menuitem" data-action="add">Add subtask</button>
-    <button type="button" role="menuitem" data-action="rename">Rename</button>
+    <button type="button" role="menuitem" data-action="rename">Edit title</button>
     <button type="button" role="menuitem" data-action="delete" class="context-danger">Delete</button>
   </div>
 
