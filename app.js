@@ -1,4 +1,4 @@
-const APP_VERSION='v0.2';
+const APP_VERSION='v0.3';
 const STORAGE_KEY='notetree_pages_v1';
 let pages=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
 let currentPageId=null,newPageParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
@@ -60,7 +60,7 @@ function treeBranch(page){
  open.onclick=()=>{if(Date.now()<suppressTreeClickUntil)return;openPage(page.id);};
  row.oncontextmenu=event=>openPageContextMenu(event,page.id);
  bindLongPress(row,page.id);
- if(page.parentId!==null){
+ if(page.parentId!==null&&!isMobile()){
   row.draggable=true;
   row.ondragstart=event=>startPageDrag(event,page.id);
   row.ondragover=event=>dragPageOver(event,page.id);
@@ -242,7 +242,7 @@ $('pageContextMenu').onclick=event=>{
 document.addEventListener('pointerdown',event=>{if(!event.target.closest('#pageContextMenu'))closePageContextMenu();});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){closePageContextMenu();closeSidebar();}});
 window.addEventListener('blur',()=>{closePageContextMenu();cancelLongPress();});
-window.addEventListener('resize',()=>{closePageContextMenu();if(!isMobile())closeSidebar();});
+window.addEventListener('resize',()=>{closePageContextMenu();if(!isMobile())closeSidebar();renderTree();});
 $('pageTree').addEventListener('scroll',closePageContextMenu,true);
 $('pageTree').addEventListener('dragover',clearDropIndicators);
 $('newRootBtn').onclick=()=>openNewPageDialog(null);
