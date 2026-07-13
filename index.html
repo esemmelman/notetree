@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>NoteTree v0.1</title>
+  <title>NoteTree</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
     <aside id="sidebar" class="sidebar" aria-label="Page navigation">
       <div class="sidebar-brand">
         <span class="brand-mark" aria-hidden="true">N</span>
-        <strong>NoteTree <small>v0.1</small></strong>
+        <strong>NoteTree <small class="app-version"></small></strong>
       </div>
       <div class="sidebar-actions">
         <button id="newRootBtn" class="primary-action" type="button"><span aria-hidden="true">＋</span> New page</button>
@@ -29,7 +29,7 @@
 
     <header class="appbar">
       <button id="homeBtn" class="mobile-home" type="button" aria-label="Open page tree" aria-controls="sidebar" aria-expanded="false">&#9776;</button>
-      <strong>NoteTree <small>v0.1</small></strong>
+      <strong>NoteTree <small class="app-version"></small></strong>
       <button id="mobileNewBtn" type="button">New</button>
       <button id="mobileSearchBtn" type="button">Find</button>
     </header>
@@ -42,8 +42,6 @@
           <p>Select a page from the tree, or create a new one to start writing.</p>
           <button id="welcomeNewBtn" type="button">Create a page</button>
         </div>
-        <div id="rootPages" class="page-list mobile-root-list"></div>
-        <p id="emptyHome" class="empty">Tap New to create your first page.</p>
       </section>
 
       <section id="pageView" class="editor-view" hidden>

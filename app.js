@@ -1,3 +1,4 @@
+const APP_VERSION='v0.2';
 const STORAGE_KEY='notetree_pages_v1';
 let pages=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
 let currentPageId=null,newPageParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
@@ -79,8 +80,6 @@ function renderTree(){
 
 function renderHome(){
  showOnly(homeView);currentPageId=null;renderTree();
- const roots=childrenOf(null),list=$('rootPages');list.replaceChildren(...roots.map(page=>makePageRow(page,page.content.slice(0,80))));
- $('emptyHome').hidden=roots.length>0;
 }
 
 function ancestorPath(page){
@@ -278,5 +277,7 @@ $('closeSearchBtn').onclick=()=>currentPageId?openPage(currentPageId):goHome();
 
 window.onpopstate=event=>{if(event.state?.pageId)openPage(event.state.pageId,false);else if(event.state?.search){showOnly(searchView);renderSearch();}else renderHome();};
 
-const hashPage=new URLSearchParams(location.hash.replace(/^#/,'' )).get('page');
-if(hashPage&&pageById(hashPage))openPage(hashPage,false);else renderHome();
+document.querySelectorAll('.app-version').forEach(item=>item.textContent=APP_VERSION);
+document.title=`NoteTree ${APP_VERSION}`;
+history.replaceState({},'',location.pathname);
+renderHome();
