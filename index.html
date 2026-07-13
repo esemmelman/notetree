@@ -1,0 +1,111 @@
+<!doctype html>
+//
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NoteTree v0.1</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Page navigation">
+      <div class="sidebar-brand">
+        <span class="brand-mark" aria-hidden="true">N</span>
+        <strong>NoteTree <small>v0.1</small></strong>
+      </div>
+      <div class="sidebar-actions">
+        <button id="newRootBtn" class="primary-action" type="button"><span aria-hidden="true">＋</span> New page</button>
+        <button id="searchBtn" class="icon-action" type="button" aria-label="Search pages" title="Search pages">⌕</button>
+      </div>
+      <nav class="tree-panel" aria-label="Page tree">
+        <div class="tree-heading">Pages</div>
+        <div id="pageTree" class="page-tree"></div>
+        <p id="emptyTree" class="tree-empty">No pages yet</p>
+      </nav>
+      <div class="sidebar-footer">Stored on this device</div>
+    </aside>
+
+    <header class="appbar">
+      <button id="homeBtn" class="mobile-home" type="button" aria-label="All pages">☰</button>
+      <strong>NoteTree <small>v0.1</small></strong>
+      <button id="mobileNewBtn" type="button">New</button>
+      <button id="mobileSearchBtn" type="button">Find</button>
+    </header>
+
+    <main class="workspace">
+      <section id="homeView" class="welcome-view">
+        <div class="welcome-card">
+          <div class="welcome-icon" aria-hidden="true">✦</div>
+          <h1>Your ideas, branching out.</h1>
+          <p>Select a page from the tree, or create a new one to start writing.</p>
+          <button id="welcomeNewBtn" type="button">Create a page</button>
+        </div>
+        <div id="rootPages" class="page-list mobile-root-list"></div>
+        <p id="emptyHome" class="empty">Tap New to create your first page.</p>
+      </section>
+
+      <section id="pageView" class="editor-view" hidden>
+        <div class="editor-toolbar">
+          <nav id="breadcrumbs" class="breadcrumbs" aria-label="Breadcrumb"></nav>
+          <button id="addChildBtn" class="subtle-button" type="button">＋ Add subpage</button>
+        </div>
+        <article class="editor-page">
+          <input id="pageTitle" class="page-title" placeholder="Untitled" aria-label="Page title">
+          <textarea id="pageContent" class="page-content" placeholder="Start writing…" aria-label="Page notes"></textarea>
+
+          <details class="page-details">
+            <summary>Page connections</summary>
+            <div class="details-grid">
+              <section class="card">
+                <div class="section-heading"><h2>Subpages</h2><button id="detailsAddChildBtn" type="button">Add</button></div>
+                <div id="childPages" class="page-list compact"></div>
+              </section>
+              <section class="card">
+                <div class="section-heading"><h2>Links</h2></div>
+                <div class="link-form"><select id="linkTarget" aria-label="Page to link"></select><button id="addLinkBtn" type="button">Link</button></div>
+                <div id="pageLinks" class="page-list compact"></div>
+              </section>
+              <section class="card">
+                <h2>Backlinks</h2>
+                <div id="backlinks" class="page-list compact"></div>
+              </section>
+            </div>
+            <button id="deletePageBtn" class="danger" type="button">Delete page</button>
+          </details>
+        </article>
+      </section>
+
+      <section id="searchView" class="search-view" hidden>
+        <form id="searchForm" class="search-form"><input id="searchInput" type="search" enterkeyhint="search" placeholder="Search titles and notes" aria-label="Search pages"><button type="button" id="closeSearchBtn">Close</button></form>
+        <div id="searchResults" class="page-list"></div>
+        <p id="searchMessage" class="empty">Type to search all pages.</p>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="newPageDialog">
+    <form id="newPageForm" method="dialog">
+      <h2 id="newPageHeading">New page</h2>
+      <input id="newPageTitle" required placeholder="Page title" aria-label="New page title">
+      <div class="dialog-actions"><button value="cancel" type="button" id="cancelNewPage">Cancel</button><button value="default" type="submit">Create</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="renamePageDialog">
+    <form id="renamePageForm" method="dialog">
+      <h2>Rename page</h2>
+      <input id="renamePageTitle" required aria-label="Page title">
+      <div class="dialog-actions"><button value="cancel" type="button" id="cancelRenamePage">Cancel</button><button value="default" type="submit">Rename</button></div>
+    </form>
+  </dialog>
+
+  <div id="pageContextMenu" class="context-menu" role="menu" hidden>
+    <button type="button" role="menuitem" data-action="add">Add subtask</button>
+    <button type="button" role="menuitem" data-action="rename">Rename</button>
+    <button type="button" role="menuitem" data-action="delete" class="context-danger">Delete</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
