@@ -1,4 +1,4 @@
-const APP_VERSION='v0.8';
+const APP_VERSION='v0.9';
 const STORAGE_KEY='notetree_pages_v1';
 let pages=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
 let currentPageId=null,newPageParentId=null,inlineNewParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
@@ -91,7 +91,7 @@ function treeBranch(page){
 }
 
 function renderTree(){
- const roots=childrenOf(null);$('pageTree').replaceChildren(...roots.map(treeBranch));$('emptyTree').hidden=roots.length>0;
+ const roots=childrenOf(null).filter(page=>childrenOf(page.id).length);$('pageTree').replaceChildren(...roots.map(treeBranch));$('emptyTree').hidden=roots.length>0;
 }
 
 function renderHome(){
