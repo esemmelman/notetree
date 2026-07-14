@@ -1,7 +1,7 @@
-const APP_VERSION='v0.3';
+const APP_VERSION='v0.4';
 const STORAGE_KEY='notetree_pages_v1';
 let pages=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
-let currentPageId=null,newPageParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
+let currentPageId=null,newPageParentId=null,inlineNewParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
 const collapsedPages=new Set();
 const MOBILE_BREAKPOINT=699;
 let longPressTimer=null,longPressStart=null,suppressTreeClickUntil=0;
@@ -46,6 +46,19 @@ function makePageRow(page,detail=''){
  row.append(open,count);return row;
 }
 
+function inlineSubtaskForm(parentId){
+ const form=document.createElement('form');form.className='tree-inline-create';
+ const input=document.createElement('input');input.type='text';input.required=true;input.placeholder='New subtask';input.setAttribute('aria-label','New subtask title');
+ const add=document.createElement('button');add.type='submit';add.textContent='+';add.setAttribute('aria-label','Create subtask');
+ form.append(input,add);
+ form.onsubmit=event=>{
+  event.preventDefault();const title=input.value.trim();if(!title)return;
+  createPage(parentId,title,false);inlineNewParentId=null;renderTree();
+ };
+ input.onkeydown=event=>{if(event.key==='Escape'){event.stopPropagation();inlineNewParentId=null;renderTree();}};
+ return form;
+}
+
 function treeBranch(page){
  const branch=document.createElement('div');branch.className='tree-branch';
  const row=document.createElement('div');row.className=`tree-row${page.parentId===null?' root':''}${page.id===currentPageId?' active':''}`;
@@ -68,8 +81,11 @@ function treeBranch(page){
   row.ondragend=endPageDrag;
  }
  row.append(toggle,open);branch.append(row);
- if(children.length&&!collapsedPages.has(page.id)){
-  const nested=document.createElement('div');nested.className='tree-children';nested.replaceChildren(...children.map(treeBranch));branch.append(nested);
+ const isAddingChild=inlineNewParentId===page.id;
+ if((children.length||isAddingChild)&&!collapsedPages.has(page.id)){
+  const nested=document.createElement('div');nested.className='tree-children';
+  if(isAddingChild)nested.append(inlineSubtaskForm(page.id));
+  nested.append(...children.map(treeBranch));branch.append(nested);
  }
  return branch;
 }
@@ -94,7 +110,7 @@ function revealInTree(page){
 
 function renderBreadcrumbs(page){
  const bar=$('breadcrumbs');bar.replaceChildren();
- const home=document.createElement('button');home.type='button';home.textContent='Pages';home.onclick=goHome;bar.append(home);
+ const home=document.createElement('button');home.type='button';home.textContent='⌂';home.setAttribute('aria-label','All pages');home.onclick=goHome;bar.append(home);
  ancestorPath(page).forEach(item=>{
   const separator=document.createElement('span');separator.className='breadcrumb-separator';separator.textContent='›';
   const button=document.createElement('button');button.type='button';button.textContent=item.title||'Untitled';button.onclick=()=>openPage(item.id);
@@ -133,7 +149,21 @@ function schedulePageSave(){
  },180);
 }
 
-function openNewPageDialog(parentId){newPageParentId=parentId;$('newPageTitle').value='';$('newPageHeading').textContent=parentId?'New subpage':'New page';$('newPageDialog').showModal();$('newPageTitle').focus();}
+function openNewPageDialog(parentId){
+ if(parentId&&isMobile()){
+  inlineNewParentId=parentId;collapsedPages.delete(parentId);renderTree();document.querySelector('.tree-inline-create input')?.focus();return;
+ }
+ newPageParentId=parentId;$('newPageTitle').value='';$('newPageHeading').textContent=parentId?'New subpage':'New page';$('newPageDialog').showModal();$('newPageTitle').focus();
+}
+
+function createPage(parentId,title,openAfterCreate=true){
+ const now=new Date().toISOString();const page={id:uid(),parentId,title,content:'',links:[],createdAt:now,updatedAt:now};
+ const orderedSiblings=parentId===null?[]:childrenOf(parentId).filter(sibling=>Number.isFinite(sibling.sortOrder));
+ if(orderedSiblings.length)page.sortOrder=Math.max(...orderedSiblings.map(sibling=>sibling.sortOrder))+1;
+ pages.push(page);if(parentId)collapsedPages.delete(parentId);save();
+ if(openAfterCreate)openPage(page.id);
+ return page;
+}
 
 function clearDropIndicators(){document.querySelectorAll('.tree-row.drop-before,.tree-row.drop-after').forEach(row=>row.classList.remove('drop-before','drop-after'));}
 
@@ -178,8 +208,9 @@ function openPageContextMenu(event,pageId){
  event.preventDefault();event.stopPropagation();contextPageId=pageId;
  const menu=$('pageContextMenu');menu.hidden=false;
  const margin=8,width=menu.offsetWidth,height=menu.offsetHeight;
- menu.style.left=`${Math.max(margin,Math.min(event.clientX,window.innerWidth-width-margin))}px`;
- menu.style.top=`${Math.max(margin,Math.min(event.clientY,window.innerHeight-height-margin))}px`;
+ menu.style.setProperty('left',`${Math.max(margin,Math.min(event.clientX,window.innerWidth-width-margin))}px`,'important');
+ menu.style.setProperty('top',`${Math.max(margin,Math.min(event.clientY,window.innerHeight-height-margin))}px`,'important');
+ menu.style.setProperty('right','auto','important');menu.style.setProperty('bottom','auto','important');
  menu.querySelector('button').focus();
 }
 
@@ -194,7 +225,8 @@ function bindLongPress(row,pageId){
   longPressTimer=setTimeout(()=>{
    if(!longPressStart)return;
    suppressTreeClickUntil=Date.now()+700;navigator.vibrate?.(25);
-   openPageContextMenu({preventDefault(){},stopPropagation(){},clientX:longPressStart.x,clientY:longPressStart.y},pageId);
+   const bounds=row.getBoundingClientRect();
+   openPageContextMenu({preventDefault(){},stopPropagation(){},clientX:bounds.right+6,clientY:bounds.top},pageId);
    cancelLongPress();
   },550);
  });
@@ -220,10 +252,7 @@ function deletePage(pageId){
 
 $('newPageForm').onsubmit=event=>{
  event.preventDefault();const title=$('newPageTitle').value.trim();if(!title)return;
- const now=new Date().toISOString();const page={id:uid(),parentId:newPageParentId,title,content:'',links:[],createdAt:now,updatedAt:now};
- const orderedSiblings=newPageParentId===null?[]:childrenOf(newPageParentId).filter(sibling=>Number.isFinite(sibling.sortOrder));
- if(orderedSiblings.length)page.sortOrder=Math.max(...orderedSiblings.map(sibling=>sibling.sortOrder))+1;
- pages.push(page);if(newPageParentId)collapsedPages.delete(newPageParentId);save();$('newPageDialog').close();openPage(page.id);
+ $('newPageDialog').close();createPage(newPageParentId,title);
 };
 $('cancelNewPage').onclick=()=>$('newPageDialog').close();
 $('renamePageForm').onsubmit=event=>{
@@ -280,4 +309,6 @@ window.onpopstate=event=>{if(event.state?.pageId)openPage(event.state.pageId,fal
 document.querySelectorAll('.app-version').forEach(item=>item.textContent=APP_VERSION);
 document.title=`NoteTree ${APP_VERSION}`;
 history.replaceState({},'',location.pathname);
+collapsedPages.clear();
 renderHome();
+if(isMobile())openSidebar();
