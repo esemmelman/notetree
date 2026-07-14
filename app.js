@@ -1,4 +1,4 @@
-const APP_VERSION='v0.14';
+const APP_VERSION='v0.15';
 const STORAGE_KEY='notetree_pages_v1';
 let pages=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
 let currentPageId=null,newPageParentId=null,inlineNewParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
@@ -72,6 +72,7 @@ function treeBranch(page){
  const open=document.createElement('button');open.type='button';open.className='tree-page';open.textContent=page.title||'Untitled';open.title=page.title||'Untitled';
  open.onclick=()=>{if(Date.now()<suppressTreeClickUntil)return;openPage(page.id);};
  row.oncontextmenu=event=>openPageContextMenu(event,page.id);
+ row.onselectstart=event=>event.preventDefault();
  bindLongPress(row,page.id);
  if(page.parentId!==null&&!isMobile()){
   row.draggable=true;
