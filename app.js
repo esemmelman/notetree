@@ -1,4 +1,4 @@
-const APP_VERSION='v0.12';
+const APP_VERSION='v0.13';
 const STORAGE_KEY='notetree_pages_v1';
 let pages=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
 let currentPageId=null,newPageParentId=null,inlineNewParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
@@ -295,7 +295,7 @@ function renderSearch(){
  $('searchMessage').textContent=matches.length?'':'No matching pages.';$('searchMessage').hidden=matches.length>0;
  matches.forEach(page=>results.append(makePageRow(page,page.content.slice(0,100))));
 }
-function openSearch(){showOnly(searchView);$('searchInput').value='';renderSearch();$('searchInput').focus();history.pushState({search:true},'','#search');}
+function openSearch(){showOnly(searchView);closeSidebar();$('searchInput').value='';renderSearch();$('searchInput').focus();history.pushState({search:true},'','#search');}
 $('searchBtn').onclick=openSearch;$('mobileSearchBtn').onclick=openSearch;
 $('searchInput').addEventListener('input',renderSearch);$('searchForm').onsubmit=event=>{event.preventDefault();renderSearch();};
 $('closeSearchBtn').onclick=()=>currentPageId?openPage(currentPageId):goHome();
