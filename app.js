@@ -1,4 +1,4 @@
-const APP_VERSION='v0.10';
+const APP_VERSION='v0.11';
 const STORAGE_KEY='notetree_pages_v1';
 let pages=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
 let currentPageId=null,newPageParentId=null,inlineNewParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
