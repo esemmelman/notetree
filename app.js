@@ -138,6 +138,10 @@ function openPage(id,push=true){
  if(!pageById(id))return;currentPageId=id;renderPage();closeSidebar();
  if(push)history.pushState({pageId:id},'',`#page=${encodeURIComponent(id)}`);
  window.scrollTo(0,0);
+ requestAnimationFrame(()=>{
+  pageContent.focus({preventScroll:true});
+  pageContent.setSelectionRange(pageContent.value.length,pageContent.value.length);
+ });
 }
 
 function goHome(push=true){renderHome();if(push)history.pushState({},'',location.pathname);window.scrollTo(0,0);}
