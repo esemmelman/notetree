@@ -1,9 +1,10 @@
-const APP_VERSION='v0.4';
+const APP_VERSION='v0.6';
 const STORAGE_KEY='notetree_pages_v1';
 let pages=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
 let currentPageId=null,newPageParentId=null,inlineNewParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
 const collapsedPages=new Set();
 const MOBILE_BREAKPOINT=699;
+const mobileMedia=window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
 let longPressTimer=null,longPressStart=null,suppressTreeClickUntil=0;
 
 const $=id=>document.getElementById(id);
@@ -23,7 +24,7 @@ function compareChildOrder(a,b){
 function childrenOf(id){return pages.filter(page=>page.parentId===id).sort(id===null?compareTitles:compareChildOrder);}
 function showOnly(view){[homeView,pageView,searchView].forEach(item=>item.hidden=item!==view);}
 function renderActiveView(){if(!pageView.hidden)renderPage();else if(!searchView.hidden)renderSearch();else renderHome();}
-function isMobile(){return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`).matches;}
+function isMobile(){return mobileMedia.matches;}
 function openSidebar(){
  if(!isMobile())return;
  $('sidebar').classList.add('open');$('sidebarScrim').classList.add('open');
@@ -48,9 +49,8 @@ function makePageRow(page,detail=''){
 
 function inlineSubtaskForm(parentId){
  const form=document.createElement('form');form.className='tree-inline-create';
- const input=document.createElement('input');input.type='text';input.required=true;input.placeholder='New subtask';input.setAttribute('aria-label','New subtask title');
- const add=document.createElement('button');add.type='submit';add.textContent='+';add.setAttribute('aria-label','Create subtask');
- form.append(input,add);
+ const input=document.createElement('input');input.type='text';input.required=true;input.enterKeyHint='go';input.autocomplete='off';input.placeholder='New subtask';input.setAttribute('aria-label','New subtask title');
+ form.append(input);
  form.onsubmit=event=>{
   event.preventDefault();const title=input.value.trim();if(!title)return;
   createPage(parentId,title,false);inlineNewParentId=null;renderTree();
@@ -271,7 +271,8 @@ $('pageContextMenu').onclick=event=>{
 document.addEventListener('pointerdown',event=>{if(!event.target.closest('#pageContextMenu'))closePageContextMenu();});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){closePageContextMenu();closeSidebar();}});
 window.addEventListener('blur',()=>{closePageContextMenu();cancelLongPress();});
-window.addEventListener('resize',()=>{closePageContextMenu();if(!isMobile())closeSidebar();renderTree();});
+window.addEventListener('resize',closePageContextMenu);
+mobileMedia.addEventListener('change',()=>{closePageContextMenu();if(!isMobile())closeSidebar();renderTree();});
 $('pageTree').addEventListener('scroll',closePageContextMenu,true);
 $('pageTree').addEventListener('dragover',clearDropIndicators);
 $('newRootBtn').onclick=()=>openNewPageDialog(null);
