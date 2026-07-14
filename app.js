@@ -310,6 +310,6 @@ window.onpopstate=event=>{if(event.state?.pageId)openPage(event.state.pageId,fal
 document.querySelectorAll('.app-version').forEach(item=>item.textContent=APP_VERSION);
 document.title=`NoteTree ${APP_VERSION}`;
 history.replaceState({},'',location.pathname);
-collapsedPages.clear();
+pages.filter(page=>childrenOf(page.id).length).forEach(page=>collapsedPages.add(page.id));
 renderHome();
 if(isMobile())openSidebar();
