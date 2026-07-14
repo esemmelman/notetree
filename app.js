@@ -1,4 +1,4 @@
-const APP_VERSION='v0.13';
+const APP_VERSION='v0.14';
 const STORAGE_KEY='notetree_pages_v1';
 let pages=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
 let currentPageId=null,newPageParentId=null,inlineNewParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
@@ -276,6 +276,7 @@ $('welcomeNewBtn').onclick=()=>openNewPageDialog(null);
 $('addChildBtn').onclick=()=>openNewPageDialog(currentPageId);
 $('detailsAddChildBtn').onclick=()=>openNewPageDialog(currentPageId);
 $('homeBtn').onclick=toggleSidebar;
+$('sidebarCloseBtn').onclick=closeSidebar;
 $('sidebarScrim').onclick=closeSidebar;
 pageTitle.addEventListener('input',schedulePageSave);pageContent.addEventListener('input',()=>{schedulePageSave();resizeEditor();});
 
