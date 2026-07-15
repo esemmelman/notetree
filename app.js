@@ -1,6 +1,6 @@
-const APP_VERSION='v0.16';
-const STORAGE_KEY='notetree_pages_v1';
-let pages=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');
+const APP_VERSION='v0.17';
+const pageStore=window.NoteTreeStorage.createLocalStore();
+let pages=pageStore.loadPages();
 let currentPageId=null,newPageParentId=null,inlineNewParentId=null,contextPageId=null,renamePageId=null,draggedPageId=null,saveTimer=null;
 const collapsedPages=new Set();
 const MOBILE_BREAKPOINT=699;
@@ -12,7 +12,7 @@ const homeView=$('homeView'),pageView=$('pageView'),searchView=$('searchView');
 const pageTitle=$('pageTitle'),pageContent=$('pageContent');
 
 function uid(){return crypto.randomUUID?.()||`${Date.now()}-${Math.random()}`;}
-function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(pages));}
+function save(){pageStore.savePages(pages);}
 function pageById(id){return pages.find(page=>page.id===id);}
 function compareTitles(a,b){return a.title.localeCompare(b.title,undefined,{sensitivity:'base',numeric:true});}
 function compareChildOrder(a,b){
